@@ -1,0 +1,45 @@
+name: Sync Nodes
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'nodes/all.yaml'
+      - 'nodes/base64.txt'
+      - 'nodes/history.yaml'
+      - 'nodes/mihomo.yaml'
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v4
+        with:
+          path: source
+
+      - name: Checkout team repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/team
+          token: ${{ secrets.LAIJUNLING_PAT }}
+          path: team
+
+      - name: Copy files to team repository
+        run: |
+          cp -f source/nodes/all.yaml team/ || true
+          cp -f source/nodes/base64.txt team/ || true
+          cp -f source/nodes/history.yaml team/ || true
+          cp -f source/nodes/mihomo.yaml team/ || true
+
+      - name: Commit and push changes
+        run: |
+          cd team
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Sync files from source repository"
+            git push
+          fi
