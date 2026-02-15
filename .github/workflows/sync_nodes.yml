@@ -31,6 +31,7 @@ jobs:
         run: |
           cp source/nodes/all.yaml target/ || echo "all.yaml not found, skipping"
           cp source/nodes/base64.txt target/ || echo "base64.txt not found, skipping"
+          cp source/nodes/base64.txt target/auto.txt || echo "base64.txt not found, skipping"
           cp source/nodes/history.yaml target/ || echo "history.yaml not found, skipping"
           cp source/nodes/mihomo.yaml target/ || echo "mihomo.yaml not found, skipping"
 
