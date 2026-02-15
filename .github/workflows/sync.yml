@@ -12,14 +12,16 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      # ---------- 原有同步步骤 ----------
+      # ---------- 同步上游 FreeNodes ----------
       - name: 检出仓库
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # 获取完整历史，以便后续操作
+          fetch-depth: 0   # 获取完整历史，便于后续操作
 
       - name: 添加上游仓库并获取更新
         run: |
+          # 如果之前存在 upstream remote，先移除（新环境通常没有，但安全处理）
+          git remote remove upstream 2>/dev/null || true
           git remote add upstream https://github.com/shuaidaoya/FreeNodes.git
           git fetch upstream
 
@@ -28,7 +30,7 @@ jobs:
           git checkout main
           # 将上游所有文件检出到工作区（覆盖本地已有文件，但不删除本地独有的文件）
           git checkout upstream/main -- .
-          # 将工作区所有变更（包括上游文件和本地新增文件）添加到暂存区
+          # 将所有变更（包括上游文件和本地新增文件）添加到暂存区
           git add .
           # 提交合并结果（如果没有变更，git commit 会失败，所以用条件判断）
           git diff --staged --quiet || git commit -m "chore: 同步上游更新，保留本地新增文件"
@@ -36,7 +38,7 @@ jobs:
       - name: 推送更改到远程仓库
         run: git push origin main
 
-      # ---------- 新增：推送指定文件到 team 仓库 ----------
+      # ---------- 推送指定文件到 team 仓库 ----------
       - name: 检出目标仓库 (team)
         uses: actions/checkout@v4
         with:
