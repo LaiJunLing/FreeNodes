@@ -1,4 +1,4 @@
-name: Sync Files to team Repository
+name: 同步节点到team仓库
 
 on:
   push:
