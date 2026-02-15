@@ -8,6 +8,8 @@ on:
       - 'nodes/base64.txt'
       - 'nodes/history.yaml'
       - 'nodes/mihomo.yaml'
+  workflow_dispatch:    # 添加此项后，Actions 界面将显示“Run workflow”按钮
+
 jobs:
   sync:
     runs-on: ubuntu-latest
