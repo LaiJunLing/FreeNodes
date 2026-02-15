@@ -14,21 +14,26 @@ jobs:
       - name: 检出仓库
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # 获取完整历史，以便后续操作
+          fetch-depth: 0
 
       - name: 添加上游仓库并获取更新
         run: |
           git remote add upstream https://github.com/shuaidaoya/FreeNodes.git
           git fetch upstream
 
-      - name: 用上游文件覆盖所有同名文件（保留本地新增文件）
+      - name: 用上游文件覆盖所有同名文件
         run: |
           git checkout main
-          # 将上游所有文件检出到工作区（覆盖本地已有文件，但不删除本地独有的文件）
           git checkout upstream/main -- .
-          # 将工作区所有变更（包括上游文件和本地新增文件）添加到暂存区
+
+      - name: 配置 Git 用户
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: 提交更改（如果有）
+        run: |
           git add .
-          # 提交合并结果（如果没有变更，git commit 会失败，所以用条件判断）
           git diff --staged --quiet || git commit -m "chore: 同步上游更新，保留本地新增文件"
 
       - name: 推送更改到远程仓库
