@@ -1,24 +1,35 @@
 name: 同步FreeNodes项目
-
 on:
   schedule:
-    - cron: "*/30 * * * *"   # 每30分钟触发一次
-  workflow_dispatch:          # 允许手动触发
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
 
 permissions:
-  contents: write              # 授予写入仓库内容的权限
+  contents: write
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: 检出仓库
         uses: actions/checkout@v4
-
-      - name: Sync with upstream
-        uses: aormsby/Fork-Sync-With-Upstream-action@v3.4
         with:
-          upstream_sync_repo: shuaidaoya/FreeNodes
-          upstream_sync_branch: main
-          target_sync_branch: main
-          target_repo_token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0  # 获取完整历史，以便后续操作
+
+      - name: 添加上游仓库并获取更新
+        run: |
+          git remote add upstream https://github.com/shuaidaoya/FreeNodes.git
+          git fetch upstream
+
+      - name: 用上游文件覆盖所有同名文件（保留本地新增文件）
+        run: |
+          git checkout main
+          # 将上游所有文件检出到工作区（覆盖本地已有文件，但不删除本地独有的文件）
+          git checkout upstream/main -- .
+          # 将工作区所有变更（包括上游文件和本地新增文件）添加到暂存区
+          git add .
+          # 提交合并结果（如果没有变更，git commit 会失败，所以用条件判断）
+          git diff --staged --quiet || git commit -m "chore: 同步上游更新，保留本地新增文件"
+
+      - name: 推送更改到远程仓库
+        run: git push origin main
