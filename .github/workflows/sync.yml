@@ -1,4 +1,4 @@
-name: Sync FreeNodes
+name: 同步FreeNodes项目
 
 on:
   schedule:
