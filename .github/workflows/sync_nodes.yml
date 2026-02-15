@@ -1,0 +1,48 @@
+name: Sync Files to team Repository
+
+on:
+  push:
+    branches:
+      - main          # 如果源仓库的默认分支是 main，请保留；若为 master，请改为 master
+    paths:
+      - 'nodes/all.yaml'
+      - 'nodes/base64.txt'
+      - 'nodes/history.yaml'
+      - 'nodes/mihomo.yaml'
+  workflow_dispatch:   # 支持手动触发
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source repository (FreeNodes)
+        uses: actions/checkout@v4
+        with:
+          path: source
+
+      - name: Checkout target repository (team)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/team
+          token: ${{ secrets.LAIJUNLING_PAT }}
+          path: target
+
+      - name: Copy files from source/nodes/ to target/
+        run: |
+          cp source/nodes/all.yaml target/ || echo "all.yaml not found, skipping"
+          cp source/nodes/base64.txt target/ || echo "base64.txt not found, skipping"
+          cp source/nodes/history.yaml target/ || echo "history.yaml not found, skipping"
+          cp source/nodes/mihomo.yaml target/ || echo "mihomo.yaml not found, skipping"
+
+      - name: Commit and push changes to team repository
+        run: |
+          cd target
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Sync files from ${{ github.repository }}"
+            git push
+          fi
