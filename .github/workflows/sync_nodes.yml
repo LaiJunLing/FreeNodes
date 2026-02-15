@@ -22,7 +22,7 @@ jobs:
       - name: Checkout team repository
         uses: actions/checkout@v4
         with:
-          repository: your-username/team  # 替换为实际的 team 仓库名，例如 owner/team-repo
+          repository: ${{ github.repository_owner }}/team  # 替换为实际的 team 仓库名，例如 owner/team-repo
           token: ${{ secrets.LAIJUNLING_PAT }}
           path: team
 
