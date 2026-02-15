@@ -1,0 +1,24 @@
+name: Sync FreeNodes
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"   # 每30分钟触发一次
+  workflow_dispatch:          # 允许手动触发
+
+permissions:
+  contents: write              # 授予写入仓库内容的权限
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Sync with upstream
+        uses: aormsby/Fork-Sync-With-Upstream-action@v3.4
+        with:
+          upstream_sync_repo: shuaidaoya/FreeNodes
+          upstream_sync_branch: main
+          target_sync_branch: main
+          target_repo_token: ${{ secrets.GITHUB_TOKEN }}
