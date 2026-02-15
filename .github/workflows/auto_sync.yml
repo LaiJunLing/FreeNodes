@@ -1,0 +1,47 @@
+name: Sync files to team repository
+
+on:
+  push:
+    branches:
+      - main  # 根据你的默认分支调整
+    paths:
+      - 'nodes/all.yml'
+      - 'nodes/base64.txt'
+      - 'nodes/history.yaml'
+      - 'nodes/mihomo.yaml'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v4
+        with:
+          path: source
+
+      - name: Checkout team repository
+        uses: actions/checkout@v4
+        with:
+          repository: your-username/team  # 替换为实际的 team 仓库名，例如 owner/team-repo
+          token: ${{ secrets.LAIJUNLING_PAT }}
+          path: team
+
+      - name: Copy files to team repository
+        run: |
+          cp -f source/nodes/all.yml team/ || true
+          cp -f source/nodes/base64.txt team/ || true
+          cp -f source/nodes/history.yaml team/ || true
+          cp -f source/nodes/mihomo.yaml team/ || true
+
+      - name: Commit and push changes
+        run: |
+          cd team
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Sync files from source repository"
+            git push
+          fi
