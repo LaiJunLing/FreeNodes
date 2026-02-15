@@ -1,4 +1,5 @@
-name: 同步FreeNodes项目
+name: 同步FreeNodes项目并推送特定文件到team仓库
+
 on:
   schedule:
     - cron: "*/30 * * * *"
@@ -11,30 +12,55 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
+      # ---------- 原有同步步骤 ----------
       - name: 检出仓库
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # 获取完整历史，以便后续操作
 
       - name: 添加上游仓库并获取更新
         run: |
           git remote add upstream https://github.com/shuaidaoya/FreeNodes.git
           git fetch upstream
 
-      - name: 用上游文件覆盖所有同名文件
+      - name: 用上游文件覆盖所有同名文件（保留本地新增文件）
         run: |
           git checkout main
+          # 将上游所有文件检出到工作区（覆盖本地已有文件，但不删除本地独有的文件）
           git checkout upstream/main -- .
-
-      - name: 配置 Git 用户
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: 提交更改（如果有）
-        run: |
+          # 将工作区所有变更（包括上游文件和本地新增文件）添加到暂存区
           git add .
+          # 提交合并结果（如果没有变更，git commit 会失败，所以用条件判断）
           git diff --staged --quiet || git commit -m "chore: 同步上游更新，保留本地新增文件"
 
       - name: 推送更改到远程仓库
         run: git push origin main
+
+      # ---------- 新增：推送指定文件到 team 仓库 ----------
+      - name: 检出目标仓库 (team)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/team
+          token: ${{ secrets.LAIJUNLING_PAT }}   # 需提前在仓库 Secrets 中设置
+          path: target
+
+      - name: 复制文件到目标仓库
+        run: |
+          cp nodes/all.yaml target/ || echo "all.yaml not found, skipping"
+          cp nodes/base64.txt target/ || echo "base64.txt not found, skipping"
+          cp nodes/base64.txt target/auto.txt || echo "base64.txt not found, skipping (auto)"
+          cp nodes/history.yaml target/ || echo "history.yaml not found, skipping"
+          cp nodes/mihomo.yaml target/ || echo "mihomo.yaml not found, skipping"
+
+      - name: 提交并推送到 team 仓库
+        run: |
+          cd target
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Sync files from ${{ github.repository }}"
+            git push
+          fi
